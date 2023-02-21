@@ -1,0 +1,63 @@
+1326. 灌溉花园的最少水龙头数目
+  在 x 轴上有一个一维的花园。花园长度为 n，从点 0 开始，到点 n 结束。
+  花园里总共有 n + 1 个水龙头，分别位于 [0, 1, ..., n] 。
+  给你一个整数 n 和一个长度为 n + 1 的整数数组 ranges ，其中 ranges[i] （下标从 0 开始）表示：如果打开点 i 处的水龙头，可以灌溉的区域为 [i -  ranges[i], i + ranges[i]] 。
+  请你返回可以灌溉整个花园的 最少水龙头数目 。如果花园始终存在无法灌溉到的地方，请你返回 -1 。
+class Solution {
+    /**
+     * 先找出每个水龙头的覆盖区间.
+     * 将这些覆盖区间按左端点从小到大排序。
+     * 拿到最左边的区间,如果有两个区间左端点相同, 取右端点最大的那个。
+     * 如果右端点就覆盖到n了, 直接返回。
+     * 如果没有覆盖到n。
+     * 考虑接下来左端点在当前区间右端点以内的区间。 找出其中右端点最远的那个区间。
+     * 并用他更新区间。如果找不到任何和当前区间有重合的区间, 返回-1。
+     * 如果有重合的区间但是新区间的右端点仍然小于当前区间右端点, 返回-1
+     * @param n
+     * @param ranges
+     * @return
+     */
+    public int minTaps(int n, int[] ranges) {
+        List<int[]> gaps = new ArrayList<>();
+        for (int i=0; i<=n; i++) {
+            // 覆盖为0的区间不需要关注
+            if (ranges[i] == 0) continue;
+            int[] gap = new int[2];
+            gap[0] = i - ranges[i];
+            gap[1] = i + ranges[i];
+            gaps.add(gap);
+        }
+        // 按左端点排序
+        Collections.sort(gaps, (a, b) -> a[0] - b[0]);
+        int index = 0;
+        // 先找到左端点小于等于0的区间中右端点最大的
+        int right = 0;
+        int res = 1;
+        while (index < gaps.size() && gaps.get(index)[0] <= 0) {
+            right = Math.max(right, gaps.get(index)[1]);
+            ++index;
+        }
+        // 如果找完了right还是0, 说明根本无法覆盖
+        if (right == 0) return -1;
+        while (index < gaps.size() && right < n) {
+            // 找到所有左端点小于等于当前右端点的区间, 尝试更新覆盖范围
+            int nextRight = -1;
+            while (index < gaps.size() && gaps.get(index)[0] <= right) {
+                nextRight = Math.max(nextRight, gaps.get(index++)[1]);
+            }
+            // 说明没有和当前区间重合的区间
+            if (nextRight == -1) {
+                return -1;
+            }
+            // 说明当前区间没法更新到更右边
+            if (nextRight <= right) {
+                return -1;
+            }
+            // 更新right
+            right = nextRight;
+            ++res;
+        }
+        if (right >= n) return res;
+        return -1;
+    }
+}
