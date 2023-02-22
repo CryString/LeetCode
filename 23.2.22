@@ -1,0 +1,42 @@
+1140. 石子游戏 II
+
+爱丽丝和鲍勃继续他们的石子游戏。许多堆石子 排成一行，每堆都有正整数颗石子 piles[i]。游戏以谁手中的石子最多来决出胜负。
+
+爱丽丝和鲍勃轮流进行，爱丽丝先开始。最初，M = 1。
+
+在每个玩家的回合中，该玩家可以拿走剩下的 前 X 堆的所有石子，其中 1 <= X <= 2M。然后，令 M = max(M, X)。
+
+游戏一直持续到所有石子都被拿走。
+
+假设爱丽丝和鲍勃都发挥出最佳水平，返回爱丽丝可以得到的最大数量的石头。
+
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        # dp[M][i] 表示从i开始，设定M，Alice|Bob能拿到最多的石子
+        # 存在状态转移方程
+        # dp[M][i] = sum(piles[i:]) - min([dp[X][i+X] if X > M else dp[M][i+X] for X in range(1, 2*M + 1)])
+        # 其中 M最大可取值为len(piles)
+        n = len(piles)
+        dp = [[0] * n for _ in range(n + 1)]
+        Sums = [0] * n
+        Sums[-1] = piles[-1]
+        for i in range(n - 2, -1, -1):
+            Sums[i] = Sums[i + 1] + piles[i]
+
+        half_N = (n + 1) // 2
+        for i in range(half_N, n + 1):
+            dp[i] = Sums
+
+        for M in range(half_N - 1, 0, -1):
+            for i in range(n - 1, -1, -1):
+                # 如果可以一次性取完的话
+                if i + 2 * M - 1 >= n - 1:
+                    dp[M][i] = Sums[i]
+                else:
+                    # 从1到M纵向可取最小， 1<=X<=M
+                    vertical_min = min(dp[M][i + 1:i + 1 + M])
+                    # 从M+1到2M则是斜向可取最小，M+1<=X<=2M
+                    slash_min = min([dp[X][i + X] for X in range(M + 1, 2 * M + 1)])
+                    dp[M][i] = Sums[i] - min(vertical_min, slash_min)
+
+        return dp[1][0]
